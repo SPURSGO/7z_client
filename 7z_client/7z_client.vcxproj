@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\cpp\7zip\Common\FileStreams.cpp" />
+    <ClCompile Include="src\cpp\7zip\Common\UniqBlocks.cpp" />
+    <ClCompile Include="src\cpp\common\IntToString.cpp" />
+    <ClCompile Include="src\cpp\common\MyString.cpp" />
+    <ClCompile Include="src\cpp\common\MyVector.cpp" />
+    <ClCompile Include="src\cpp\common\NewHandler.cpp" />
+    <ClCompile Include="src\cpp\common\StringConvert.cpp" />
+    <ClCompile Include="src\cpp\common\Wildcard.cpp" />
+    <ClCompile Include="src\cpp\windows\DLL.cpp" />
+    <ClCompile Include="src\cpp\windows\FileDir.cpp" />
+    <ClCompile Include="src\cpp\windows\FileFind.cpp" />
+    <ClCompile Include="src\cpp\windows\FileIO.cpp" />
+    <ClCompile Include="src\cpp\windows\FileName.cpp" />
+    <ClCompile Include="src\cpp\windows\PropVariant.cpp" />
+    <ClCompile Include="src\cpp\windows\PropVariantConv.cpp" />
+    <ClCompile Include="src\cpp\windows\TimeUtils.cpp" />
+    <ClCompile Include="src\c\CpuArch.c" />
+    <ClCompile Include="src\main.cc" />
+    <ClCompile Include="src\StdAfx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\cpp\7zip\Archive\IArchive.h" />
+    <ClInclude Include="src\cpp\7zip\Common\FileStreams.h" />
+    <ClInclude Include="src\cpp\7zip\IDecl.h" />
+    <ClInclude Include="src\cpp\7zip\IPassword.h" />
+    <ClInclude Include="src\cpp\7zip\IProgress.h" />
+    <ClInclude Include="src\cpp\7zip\IStream.h" />
+    <ClInclude Include="src\cpp\7zip\PropID.h" />
+    <ClInclude Include="src\cpp\common\Common.h" />
+    <ClInclude Include="src\cpp\common\Common0.h" />
+    <ClInclude Include="src\cpp\common\Defs.h" />
+    <ClInclude Include="src\cpp\common\IntToString.h" />
+    <ClInclude Include="src\cpp\common\MyBuffer.h" />
+    <ClInclude Include="src\cpp\common\MyCom.h" />
+    <ClInclude Include="src\cpp\common\MyInitGuid.h" />
+    <ClInclude Include="src\cpp\common\MyLinux.h" />
+    <ClInclude Include="src\cpp\common\MyString.h" />
+    <ClInclude Include="src\cpp\common\MyTypes.h" />
+    <ClInclude Include="src\cpp\common\MyUnknown.h" />
+    <ClInclude Include="src\cpp\common\MyVector.h" />
+    <ClInclude Include="src\cpp\common\MyWindows.h" />
+    <ClInclude Include="src\cpp\common\NewHandler.h" />
+    <ClInclude Include="src\cpp\common\StringConvert.h" />
+    <ClInclude Include="src\cpp\common\Wildcard.h" />
+    <ClInclude Include="src\cpp\windows\Defs.h" />
+    <ClInclude Include="src\cpp\windows\DLL.h" />
+    <ClInclude Include="src\cpp\windows\FileDir.h" />
+    <ClInclude Include="src\cpp\windows\FileFind.h" />
+    <ClInclude Include="src\cpp\windows\FileIO.h" />
+    <ClInclude Include="src\cpp\windows\FileName.h" />
+    <ClInclude Include="src\cpp\windows\NtCheck.h" />
+    <ClInclude Include="src\cpp\windows\PropVariant.h" />
+    <ClInclude Include="src\cpp\windows\PropVariantConv.h" />
+    <ClInclude Include="src\cpp\windows\TimeUtils.h" />
+    <ClInclude Include="src\c\7zTypes.h" />
+    <ClInclude Include="src\c\7zVersion.h" />
+    <ClInclude Include="src\c\7zWindows.h" />
+    <ClInclude Include="src\c\Compiler.h" />
+    <ClInclude Include="src\c\CpuArch.h" />
+    <ClInclude Include="src\c\Precomp.h" />
+    <ClInclude Include="src\StdAfx.h" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>17.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{1e80b0c4-90e1-45c4-97ab-12f753ed412e}</ProjectGuid>
+    <RootNamespace>My7zclient</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v143</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>false</ConformanceMode>
+      <AdditionalIncludeDirectories>.;..;src;</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

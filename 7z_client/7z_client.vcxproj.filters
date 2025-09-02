@@ -1,0 +1,66 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\main.cc" />
+    <ClCompile Include="src\c\CpuArch.c" />
+    <ClCompile Include="src\cpp\7zip\Common\FileStreams.cpp" />
+    <ClCompile Include="src\cpp\7zip\Common\UniqBlocks.cpp" />
+    <ClCompile Include="src\cpp\common\IntToString.cpp" />
+    <ClCompile Include="src\cpp\common\MyString.cpp" />
+    <ClCompile Include="src\cpp\common\MyVector.cpp" />
+    <ClCompile Include="src\cpp\common\NewHandler.cpp" />
+    <ClCompile Include="src\cpp\common\StringConvert.cpp" />
+    <ClCompile Include="src\cpp\common\Wildcard.cpp" />
+    <ClCompile Include="src\cpp\windows\DLL.cpp" />
+    <ClCompile Include="src\cpp\windows\FileDir.cpp" />
+    <ClCompile Include="src\cpp\windows\FileFind.cpp" />
+    <ClCompile Include="src\cpp\windows\FileIO.cpp" />
+    <ClCompile Include="src\cpp\windows\FileName.cpp" />
+    <ClCompile Include="src\cpp\windows\PropVariant.cpp" />
+    <ClCompile Include="src\cpp\windows\PropVariantConv.cpp" />
+    <ClCompile Include="src\cpp\windows\TimeUtils.cpp" />
+    <ClCompile Include="src\StdAfx.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\c\7zTypes.h" />
+    <ClInclude Include="src\c\7zVersion.h" />
+    <ClInclude Include="src\c\7zWindows.h" />
+    <ClInclude Include="src\c\Compiler.h" />
+    <ClInclude Include="src\cpp\7zip\Archive\IArchive.h" />
+    <ClInclude Include="src\cpp\7zip\Common\FileStreams.h" />
+    <ClInclude Include="src\cpp\7zip\IDecl.h" />
+    <ClInclude Include="src\cpp\7zip\IPassword.h" />
+    <ClInclude Include="src\cpp\7zip\IProgress.h" />
+    <ClInclude Include="src\cpp\7zip\PropID.h" />
+    <ClInclude Include="src\cpp\common\Common.h" />
+    <ClInclude Include="src\cpp\common\Common0.h" />
+    <ClInclude Include="src\cpp\common\Defs.h" />
+    <ClInclude Include="src\cpp\common\IntToString.h" />
+    <ClInclude Include="src\cpp\common\MyBuffer.h" />
+    <ClInclude Include="src\cpp\common\MyCom.h" />
+    <ClInclude Include="src\cpp\common\MyInitGuid.h" />
+    <ClInclude Include="src\cpp\common\MyLinux.h" />
+    <ClInclude Include="src\cpp\common\MyString.h" />
+    <ClInclude Include="src\cpp\common\MyTypes.h" />
+    <ClInclude Include="src\cpp\common\MyVector.h" />
+    <ClInclude Include="src\cpp\common\MyWindows.h" />
+    <ClInclude Include="src\cpp\common\NewHandler.h" />
+    <ClInclude Include="src\cpp\common\StringConvert.h" />
+    <ClInclude Include="src\cpp\common\Wildcard.h" />
+    <ClInclude Include="src\cpp\windows\Defs.h" />
+    <ClInclude Include="src\cpp\windows\DLL.h" />
+    <ClInclude Include="src\cpp\windows\FileDir.h" />
+    <ClInclude Include="src\cpp\windows\FileFind.h" />
+    <ClInclude Include="src\cpp\windows\FileIO.h" />
+    <ClInclude Include="src\cpp\windows\FileName.h" />
+    <ClInclude Include="src\cpp\windows\NtCheck.h" />
+    <ClInclude Include="src\cpp\windows\PropVariant.h" />
+    <ClInclude Include="src\cpp\windows\PropVariantConv.h" />
+    <ClInclude Include="src\cpp\windows\TimeUtils.h" />
+    <ClInclude Include="src\StdAfx.h" />
+    <ClInclude Include="src\c\Precomp.h" />
+    <ClInclude Include="src\c\CpuArch.h" />
+    <ClInclude Include="src\cpp\7zip\IStream.h" />
+    <ClInclude Include="src\cpp\common\MyUnknown.h" />
+  </ItemGroup>
+</Project>
