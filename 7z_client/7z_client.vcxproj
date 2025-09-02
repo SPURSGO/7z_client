@@ -42,6 +42,7 @@
   <ItemGroup>
     <ClInclude Include="src\cpp\7zip\Archive\IArchive.h" />
     <ClInclude Include="src\cpp\7zip\Common\FileStreams.h" />
+    <ClInclude Include="src\cpp\7zip\Common\UniqBlocks.h" />
     <ClInclude Include="src\cpp\7zip\IDecl.h" />
     <ClInclude Include="src\cpp\7zip\IPassword.h" />
     <ClInclude Include="src\cpp\7zip\IProgress.h" />

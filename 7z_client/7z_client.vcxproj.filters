@@ -62,5 +62,6 @@
     <ClInclude Include="src\c\CpuArch.h" />
     <ClInclude Include="src\cpp\7zip\IStream.h" />
     <ClInclude Include="src\cpp\common\MyUnknown.h" />
+    <ClInclude Include="src\cpp\7zip\Common\UniqBlocks.h" />
   </ItemGroup>
 </Project>
