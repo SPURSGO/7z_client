@@ -58,13 +58,13 @@ enum
 };
 
 // use another id, if you want to support other formats (zip, Xz, ...).
- DEFINE_GUID_ARC (CLSID_Format, kId_Zip)
+ //DEFINE_GUID_ARC (CLSID_Format, kId_Zip)
 // DEFINE_GUID_ARC (CLSID_Format, kId_BZip2)
 // DEFINE_GUID_ARC (CLSID_Format, kId_Xz)
  //DEFINE_GUID_ARC (CLSID_Format, kId_Tar)
 // DEFINE_GUID_ARC (CLSID_Format, kId_GZip)
 // DEFINE_GUID_ARC (CLSID_Format, kId_7z)
-//DEFINE_GUID_ARC (CLSID_Format, kId_Rar)
+DEFINE_GUID_ARC (CLSID_Format, kId_Rar)
 //DEFINE_GUID_ARC (CLSID_Format, kId_Chm)
 
 using namespace NWindows;
@@ -824,32 +824,9 @@ Z7_COM7F_IMF(CArchiveUpdateCallback::CryptoGetTextPassword2(Int32 *passwordIsDef
 
 int Z7_CDECL main(int numArgs, const char *args[])
 {
-  NT_CHECK
-
-  #ifdef ENV_HAVE_LOCALE
-  MY_SetLocale();
-  #endif
-
-  PrintStringLn(kCopyrightString);
-
-  if (numArgs < 2)
-  {
-    PrintStringLn(kHelpString);
-    return 0;
-  }
 
   FString dllPrefix;
-
-  #ifdef _WIN32
   dllPrefix = NDLL::GetModuleDirPrefix();
-  #else
-  {
-    AString s (args[0]);
-    int sep = s.ReverseFind_PathSepar();
-    s.DeleteFrom(sep + 1);
-    dllPrefix = s;
-  }
-  #endif
 
   NDLL::CLibrary lib;
   if (!lib.Load(dllPrefix + FTEXT(kDllName)))
@@ -857,10 +834,6 @@ int Z7_CDECL main(int numArgs, const char *args[])
     PrintError("Cannot load 7-zip library");
     return 1;
   }
-
-#if defined(__clang__)
-#pragma GCC diagnostic ignored "-Wc++98-compat-pedantic"
-#endif
 
 #ifdef _WIN32
 Z7_DIAGNOSTIC_IGNORE_CAST_FUNCTION
@@ -876,68 +849,26 @@ Z7_DIAGNOSTIC_IGNORE_CAST_FUNCTION
     return 1;
   }
 
-  char c = 0;
   UString password;
   bool passwordIsDefined = false;
   CObjectVector<FString> params;
 
-  for (int curCmd = 1; curCmd < numArgs; curCmd++)
-  {
-    AString a(args[curCmd]);
+  // 压缩包的全路径
+  const wchar_t* arc_path = LR"()";
+  const FString &archiveName = arc_path;
 
-    if (!a.IsEmpty())
-    {
-      if (a[0] == '-')
-      {
-        if (!passwordIsDefined && a[1] == 'p')
-        {
-          password = GetUnicodeString(a.Ptr(2));
-          passwordIsDefined = true;
-          continue;
-        }
-      }
-      else
-      {
-        if (c)
-        {
-          params.Add(CmdStringToFString(a));
-          continue;
-        }
-        if (a.Len() == 1)
-        {
-          c = (char)MyCharLower_Ascii(a[0]);
-          continue;
-        }
-      }
-    }
-    {
-      PrintError(kIncorrectCommand);
-      return 1;
-    }
-  }
-
-  if (!c || params.Size() < 1)
-  {
-    PrintError(kIncorrectCommand);
-    return 1;
-  }
-
-  const FString &archiveName = params[0];
-  
+  char c = 0;
   if (c == 'a')
   {
-    // create archive command
-    if (params.Size() < 2)
-    {
-      PrintError(kIncorrectCommand);
-      return 1;
-    }
+    CObjectVector<FString> arc_file_list;
+    arc_file_list.Add(LR"(xxxx\1.txt)");
+
     CObjectVector<CDirItem> dirItems;
     {
       unsigned i;
-      for (i = 1; i < params.Size(); i++)
+      for (i = 0; i < arc_file_list.Size(); i++)
       {
-        const FString &name = params[i];
+        const FString &name = arc_file_list[i];
         
         NFind::CFileInfo fi;
         if (!fi.Find(name))
@@ -996,12 +927,6 @@ Z7_DIAGNOSTIC_IGNORE_CAST_FUNCTION
   }
   else
   {
-    if (params.Size() != 1)
-    {
-      PrintError(kIncorrectCommand);
-      return 1;
-    }
-
     bool listCommand;
     
     if (c == 'l')

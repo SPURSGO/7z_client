@@ -36,7 +36,7 @@
     <ClCompile Include="src\cpp\windows\PropVariantConv.cpp" />
     <ClCompile Include="src\cpp\windows\TimeUtils.cpp" />
     <ClCompile Include="src\c\CpuArch.c" />
-    <ClCompile Include="src\main.cc" />
+    <ClCompile Include="src\main3.cc" />
     <ClCompile Include="src\StdAfx.cpp" />
   </ItemGroup>
   <ItemGroup>

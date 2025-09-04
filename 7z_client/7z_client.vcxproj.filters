@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="src\main.cc" />
     <ClCompile Include="src\c\CpuArch.c" />
     <ClCompile Include="src\cpp\7zip\Common\FileStreams.cpp" />
     <ClCompile Include="src\cpp\7zip\Common\UniqBlocks.cpp" />
@@ -20,6 +19,7 @@
     <ClCompile Include="src\cpp\windows\PropVariantConv.cpp" />
     <ClCompile Include="src\cpp\windows\TimeUtils.cpp" />
     <ClCompile Include="src\StdAfx.cpp" />
+    <ClCompile Include="src\main3.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\c\7zTypes.h" />
