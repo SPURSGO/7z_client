@@ -17,6 +17,7 @@
 
 #include <Shlwapi.h>
 #include <iostream>
+#include <fstream>
 #pragma comment(lib, "Shlwapi.lib")
 
 #ifdef _WIN32
@@ -103,6 +104,8 @@ Z7_COM7F_IMF(CArchiveUpdateCallback::GetProperty(UInt32 index, PROPID prop_id, P
     case kpidIsDir: prop = dir_item.IsDir(); break;
     case kpidSize: if (!dir_item.IsDir()) prop = dir_item.Size; break;
     case kpidMTime: PropVariant_SetFrom_FiTime(prop, dir_item.MTime); break;
+    case kpidCTime: PropVariant_SetFrom_FiTime(prop, dir_item.CTime); break;  // 添加创建时间支持
+    case kpidATime: PropVariant_SetFrom_FiTime(prop, dir_item.ATime); break;  // 可选：添加访问时间支持
   }
   prop.Detach(value);  // 使用Detach方法
   return S_OK;
@@ -137,9 +140,54 @@ Z7_COM7F_IMF(CArchiveUpdateCallback::CryptoGetTextPassword2(Int32 *password_is_d
 
 class FileCompressor {
 public:
+  // 创建普通7z压缩文件
   static bool CompressFiles(const std::vector<std::wstring>& file_paths, 
                            const std::wstring& archive_path,
                            const std::wstring& password = L"") {
+    return CreateArchive(file_paths, archive_path, password, false);
+  }
+  
+  // 创建自解压文件
+  static bool CreateSelfExtractingArchive(const std::vector<std::wstring>& file_paths,
+                                         const std::wstring& sfx_path,
+                                         const std::wstring& password = L"",
+                                         const std::wstring& sfx_module_path = L"") {
+    // 首先创建临时的7z文件
+    std::wstring temp_7z_path = sfx_path + L".tmp.7z";
+    
+    if (!CreateArchive(file_paths, temp_7z_path, password, true)) {
+      return false;
+    }
+    
+    // 确定SFX模块路径
+    std::wstring sfx_module = sfx_module_path;
+    if (sfx_module.empty()) {
+      wchar_t module_path[MAX_PATH];
+      GetModuleFileName(NULL, module_path, MAX_PATH);
+      PathRemoveFileSpec(module_path);
+      // 默认使用7z.sfx（GUI版本）
+      PathAppend(module_path, L"7z.sfx");
+      sfx_module = module_path;
+      if ( !::PathFileExists(sfx_module.c_str())) {
+        return false;
+      }
+    }
+    
+    // 创建自解压文件：SFX模块 + 7z数据
+    bool success = CombineSfxAndArchive(sfx_module, temp_7z_path, sfx_path);
+    
+    // 清理临时文件
+    ::DeleteFile(temp_7z_path.c_str());
+    
+    return success;
+  }
+
+private:
+  // 创建7z压缩文件的核心函数
+  static bool CreateArchive(const std::vector<std::wstring>& file_paths,
+                           const std::wstring& archive_path,
+                           const std::wstring& password,
+                           bool for_sfx) {
     // Load 7z library
     FString dll_prefix = NDLL::GetModuleDirPrefix();
     NDLL::CLibrary lib;
@@ -175,31 +223,21 @@ public:
     if (f_create_object(&CLSID_Format, &IID_IOutArchive, 
                        (void**)&out_archive) != S_OK) return false;
     
-    // Set compression method and encryption if password is provided
-    if (!password.empty()) {
-      // Query ISetProperties interface
-      CMyComPtr<ISetProperties> set_properties;
-      if (out_archive->QueryInterface(IID_ISetProperties, (void**)&set_properties) == S_OK) {
-        const wchar_t *names[] = {L"x", L"he"};
-        PROPVARIANT values_xx[2] = {};
-        for (int i = 0; i < 2; i++) PropVariantInit(&values_xx[i]);
-        // 压缩等级
-        values_xx[0].vt = VT_UI4;
-        values_xx[0].ulVal = 9;
-
-        // 加密方法 AES-256  7Z内部默认使用AES-256加密。
-        // 所以只需要实现 ICryptoGetTextPassword2 接口即可
-        //values_xx[1].vt = VT_BSTR;
-        //values_xx[1].bstrVal = SysAllocString(L"AES256");
-
-        // 加密文件名
-        values_xx[1].vt = VT_BOOL;
-        values_xx[1].boolVal = VARIANT_TRUE;
-
-        HRESULT hrxx = set_properties->SetProperties(names, values_xx, 2);
-        
-        if (hrxx != S_OK) return false;
-      }
+    // Set compression properties
+    CMyComPtr<ISetProperties> set_properties;
+    if (out_archive->QueryInterface(IID_ISetProperties, (void**)&set_properties) == S_OK) {
+      const wchar_t *names[] = {L"x", L"tc"};
+      PROPVARIANT values_xx[2] = {};
+      
+      // 压缩等级
+      values_xx[0].vt = VT_UI4;
+      values_xx[0].ulVal = for_sfx ? 7 : 9;  // SFX使用稍低压缩等级以提高速度
+      
+      // 时间戳选项
+      values_xx[1].vt = VT_BOOL;
+      values_xx[1].boolVal = VARIANT_TRUE;  // 创建时间
+      
+      auto set_ret = set_properties->SetProperties(names, values_xx, 2);
     }
     
     // Create update callback
@@ -213,37 +251,69 @@ public:
                                              update_callback);
     return result == S_OK;
   }
+  
+  // 合并SFX模块和7z数据创建自解压文件
+  static bool CombineSfxAndArchive(const std::wstring& sfx_module_path,
+                                  const std::wstring& archive_path,
+                                  const std::wstring& output_path) {
+    std::ifstream sfx_file(sfx_module_path, std::ios::binary);
+    std::ifstream archive_file(archive_path, std::ios::binary);
+    std::ofstream output_file(output_path, std::ios::binary);
+    
+    if (!sfx_file.is_open() || !archive_file.is_open() || !output_file.is_open()) {
+      return false;
+    }
+    
+    // 复制SFX模块
+    output_file << sfx_file.rdbuf();
+    
+    // 复制7z数据
+    output_file << archive_file.rdbuf();
+    
+    sfx_file.close();
+    archive_file.close();
+    output_file.close();
+    
+    std::wcout << L"Self-extracting archive created: " << output_path << std::endl;
+    return true;
+  }
 };
 
 int main() {
-  // Example usage with wide strings and password protection
+  // 示例：创建自解压文件
   std::vector<std::wstring> files = {
-      LR"(C:\Users\ewing\Desktop\7z_test\7zFM.exe)",
-      LR"(C:\Users\ewing\Desktop\7z_test\7zG.exe)",
-      LR"(C:\Users\ewing\Desktop\7z_test\7-zip.chm)",
-      LR"(C:\Users\ewing\Desktop\7z_test\7-zip.dll)",
-      LR"(C:\Users\ewing\Desktop\7z_test\7-zip32.dll)",
-      LR"(C:\Users\ewing\Desktop\7z_test\Uninstall.exe)",
+      LR"(C:\Users\ewing\Desktop\zip_test\7zFM.exe)",
+      LR"(C:\Users\ewing\Desktop\zip_test\7zG.exe)",
+      LR"(C:\Users\ewing\Desktop\zip_test\7-zip.chm)",
+      LR"(C:\Users\ewing\Desktop\zip_test\7-zip.dll)",
+      LR"(C:\Users\ewing\Desktop\zip_test\7-zip32.dll)",
+      LR"(C:\Users\ewing\Desktop\zip_test\Uninstall.exe)",
   };
   
-  std::wstring archive_path = LR"(C:\Users\ewing\Desktop\archive_temp\output.7z)";
+  std::wstring sfx_path = LR"(C:\Users\ewing\Desktop\zip_test\output_sfx.exe)";
   
-  // Delete existing file if present
-  if (::PathFileExists(archive_path.c_str())) {
-    ::DeleteFile(archive_path.c_str());
+  // 删除已存在的文件
+  if (::PathFileExists(sfx_path.c_str())) {
+    ::DeleteFile(sfx_path.c_str());
   }
   
-  // Set password for encryption
-  std::wstring password = L"mypassword123";
+  // 设置密码（可选）
+  std::wstring password = L"";
   
-  bool success = FileCompressor::CompressFiles(files, archive_path, password);
+  std::wcout << L"Creating self-extracting archive..." << std::endl;
+  
+  // 创建自解压文件
+  bool success = FileCompressor::CreateSelfExtractingArchive(files, sfx_path, password);
   
   if (success) {
-    // Verify the encrypted archive was created
-    if (::PathFileExists(archive_path.c_str())) {
+    if (::PathFileExists(sfx_path.c_str())) {
+      std::wcout << L"Self-extracting archive created successfully!" << std::endl;
+      std::wcout << L"File: " << sfx_path << std::endl;
+      std::wcout << L"Password: " << password << std::endl;
       return 0; // Success
     }
   }
   
+  std::wcout << L"Failed to create self-extracting archive!" << std::endl;
   return 1; // Failure
 }
