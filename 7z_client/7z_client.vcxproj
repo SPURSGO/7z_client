@@ -20,6 +20,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\cpp\7zip\Common\FileStreams.cpp" />
+    <ClCompile Include="src\cpp\7zip\Common\LimitedStreams.cpp" />
+    <ClCompile Include="src\cpp\7zip\Common\StreamUtils.cpp" />
     <ClCompile Include="src\cpp\7zip\Common\UniqBlocks.cpp" />
     <ClCompile Include="src\cpp\common\IntToString.cpp" />
     <ClCompile Include="src\cpp\common\MyString.cpp" />
@@ -42,6 +44,8 @@
   <ItemGroup>
     <ClInclude Include="src\cpp\7zip\Archive\IArchive.h" />
     <ClInclude Include="src\cpp\7zip\Common\FileStreams.h" />
+    <ClInclude Include="src\cpp\7zip\Common\LimitedStreams.h" />
+    <ClInclude Include="src\cpp\7zip\Common\StreamUtils.h" />
     <ClInclude Include="src\cpp\7zip\Common\UniqBlocks.h" />
     <ClInclude Include="src\cpp\7zip\IDecl.h" />
     <ClInclude Include="src\cpp\7zip\IPassword.h" />

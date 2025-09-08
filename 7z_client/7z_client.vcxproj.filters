@@ -20,6 +20,8 @@
     <ClCompile Include="src\cpp\windows\TimeUtils.cpp" />
     <ClCompile Include="src\StdAfx.cpp" />
     <ClCompile Include="src\main3.cc" />
+    <ClCompile Include="src\cpp\7zip\Common\LimitedStreams.cpp" />
+    <ClCompile Include="src\cpp\7zip\Common\StreamUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\c\7zTypes.h" />
@@ -63,5 +65,7 @@
     <ClInclude Include="src\cpp\7zip\IStream.h" />
     <ClInclude Include="src\cpp\common\MyUnknown.h" />
     <ClInclude Include="src\cpp\7zip\Common\UniqBlocks.h" />
+    <ClInclude Include="src\cpp\7zip\Common\LimitedStreams.h" />
+    <ClInclude Include="src\cpp\7zip\Common\StreamUtils.h" />
   </ItemGroup>
 </Project>

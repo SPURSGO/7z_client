@@ -5,6 +5,7 @@
 #include "cpp/Common/MyInitGuid.h"
 #include "cpp/Common/Defs.h"
 #include "cpp/Common/StringConvert.h"
+#include "cpp/Common/IntToString.h"
 #include "cpp/Windows/DLL.h"
 #include "cpp/Windows/FileDir.h"
 #include "cpp/Windows/FileFind.h"
@@ -12,6 +13,7 @@
 #include "cpp/Windows/PropVariantConv.h"
 #include "cpp/Windows/TimeUtils.h"
 #include "cpp/7zip/Common/FileStreams.h"
+#include "cpp/7zip/Common/LimitedStreams.h"
 #include "cpp/7zip/Archive/IArchive.h"
 #include "cpp/7zip/IPassword.h"
 
@@ -61,6 +63,11 @@ class CArchiveUpdateCallback Z7_final:
   Z7_IFACE_COM7_IMP(IArchiveUpdateCallback)
 
 public:
+  // 分卷压缩相关成员
+  CRecordVector<UInt64> VolumesSizes;
+  UString VolName;
+  UString VolExt;
+  
   const CObjectVector<CDirItem> *dir_items_;
   bool password_is_defined_;
   UString password_;
@@ -71,6 +78,16 @@ public:
     dir_items_ = dir_items;
     password_ = password;
     password_is_defined_ = !password.IsEmpty();
+  }
+  
+  // 设置分卷参数
+  void SetVolumeInfo(const UString &vol_name, const UString &vol_ext, UInt64 volume_size) {
+    VolName = vol_name;
+    VolExt = vol_ext;
+    VolumesSizes.Clear();
+    if (volume_size > 0) {
+      VolumesSizes.Add(volume_size);
+    }
   }
 };
 
@@ -102,22 +119,24 @@ Z7_COM7F_IMF(CArchiveUpdateCallback::GetProperty(UInt32 index, PROPID prop_id, P
   switch (prop_id) {
     case kpidPath: prop = dir_item.path_for_handler; break;
     case kpidIsDir: prop = dir_item.IsDir(); break;
-    case kpidSize: if (!dir_item.IsDir()) prop = dir_item.Size; break;
+    case kpidSize: prop = dir_item.Size; break;
+    case kpidCTime: PropVariant_SetFrom_FiTime(prop, dir_item.CTime); break;
+    case kpidATime: PropVariant_SetFrom_FiTime(prop, dir_item.ATime); break;
     case kpidMTime: PropVariant_SetFrom_FiTime(prop, dir_item.MTime); break;
-    case kpidCTime: PropVariant_SetFrom_FiTime(prop, dir_item.CTime); break;  // 添加创建时间支持
-    case kpidATime: PropVariant_SetFrom_FiTime(prop, dir_item.ATime); break;  // 可选：添加访问时间支持
+    case kpidAttrib: prop = (UInt32)dir_item.GetWinAttrib(); break;
   }
-  prop.Detach(value);  // 使用Detach方法
+  prop.Detach(value);
   return S_OK;
 }
 
 Z7_COM7F_IMF(CArchiveUpdateCallback::GetStream(UInt32 index, ISequentialInStream **in_stream)) {
   const CDirItem &dir_item = (*dir_items_)[index];
   if (dir_item.IsDir()) return S_OK;
-  CInFileStream *in_file_stream_spec = new CInFileStream;
-  CMyComPtr<ISequentialInStream> in_file_stream(in_file_stream_spec);
-  if (!in_file_stream_spec->Open(dir_item.full_path)) return GetLastError_noZero_HRESULT();
-  *in_stream = in_file_stream.Detach();
+  
+  CInFileStream *in_stream_spec = new CInFileStream;
+  CMyComPtr<ISequentialInStream> in_stream_loc(in_stream_spec);
+  if (!in_stream_spec->Open(dir_item.full_path)) return E_FAIL;
+  *in_stream = in_stream_loc.Detach();
   return S_OK;
 }
 
@@ -125,12 +144,40 @@ Z7_COM7F_IMF(CArchiveUpdateCallback::SetOperationResult(Int32 operationResult)) 
   return S_OK;
 }
 
-Z7_COM7F_IMF(CArchiveUpdateCallback::GetVolumeSize(UInt32 /* index */, UInt64 * /* size */)) {
-  return S_FALSE;
+// 分卷大小获取方法
+Z7_COM7F_IMF(CArchiveUpdateCallback::GetVolumeSize(UInt32 index, UInt64 *size)) {
+  if (VolumesSizes.IsEmpty())
+    return S_FALSE;
+  if (index >= (UInt32)VolumesSizes.Size())
+    *size = VolumesSizes.Back();
+  else
+    *size = VolumesSizes[index];
+  return S_OK;
 }
 
-Z7_COM7F_IMF(CArchiveUpdateCallback::GetVolumeStream(UInt32 /* index */, ISequentialOutStream ** /* volumeStream */)) {
-  return S_FALSE;
+// 分卷流创建方法
+Z7_COM7F_IMF(CArchiveUpdateCallback::GetVolumeStream(UInt32 index, ISequentialOutStream **volumeStream)) {
+  wchar_t temp[16];
+  ConvertUInt32ToString(index + 1, temp);
+  UString res = temp;
+  while (res.Len() < 3)  // 使用3位数字，支持更多分卷
+    res.InsertAtFront(L'0');
+  UString fileName = VolName;
+  fileName.Add_Dot();
+  fileName += res;
+  if (!VolExt.IsEmpty()) {
+    fileName.Add_Dot();
+    fileName += VolExt;
+  }
+  
+  COutFileStream *streamSpec = new COutFileStream;
+  CMyComPtr<ISequentialOutStream> streamLoc(streamSpec);
+  if (!streamSpec->Create_NEW(us2fs(fileName)))
+    return GetLastError_noZero_HRESULT();
+  *volumeStream = streamLoc.Detach();
+  
+  std::wcout << L"Creating volume: " << fileName << std::endl;
+  return S_OK;
 }
 
 Z7_COM7F_IMF(CArchiveUpdateCallback::CryptoGetTextPassword2(Int32 *password_is_defined, BSTR *password)) {
@@ -144,7 +191,21 @@ public:
   static bool CompressFiles(const std::vector<std::wstring>& file_paths, 
                            const std::wstring& archive_path,
                            const std::wstring& password = L"") {
-    return CreateArchive(file_paths, archive_path, password, false);
+    return CreateArchive(file_paths, archive_path, password, false, 0);
+  }
+  
+  // 创建分卷压缩文件
+  static bool CompressFilesWithVolumes(const std::vector<std::wstring>& file_paths,
+                                      const std::wstring& base_archive_path,
+                                      UInt64 volume_size_mb,
+                                      const std::wstring& password = L"") {
+    if (volume_size_mb == 0) {
+      std::wcerr << L"Volume size must be greater than 0" << std::endl;
+      return false;
+    }
+    
+    UInt64 volume_size_bytes = volume_size_mb * 1024 * 1024;  // 转换为字节
+    return CreateArchive(file_paths, base_archive_path, password, false, volume_size_bytes);
   }
   
   // 创建自解压文件
@@ -152,10 +213,10 @@ public:
                                          const std::wstring& sfx_path,
                                          const std::wstring& password = L"",
                                          const std::wstring& sfx_module_path = L"") {
-    // 首先创建临时的7z文件
-    std::wstring temp_7z_path = sfx_path + L".tmp.7z";
+    // 生成临时7z文件
+    std::wstring temp_7z_path = sfx_path + L".temp.7z";
     
-    if (!CreateArchive(file_paths, temp_7z_path, password, true)) {
+    if (!CreateArchive(file_paths, temp_7z_path, password, true, 0)) {
       return false;
     }
     
@@ -187,7 +248,8 @@ private:
   static bool CreateArchive(const std::vector<std::wstring>& file_paths,
                            const std::wstring& archive_path,
                            const std::wstring& password,
-                           bool for_sfx) {
+                           bool for_sfx,
+                           UInt64 volume_size = 0) {
     // Load 7z library
     FString dll_prefix = NDLL::GetModuleDirPrefix();
     NDLL::CLibrary lib;
@@ -212,11 +274,38 @@ private:
     
     if (dir_items.Size() == 0) return false;
     
-    // Create output file
-    FString archive_name = us2fs(UString(archive_path.c_str()));
-    COutFileStream* out_file_stream_spec = new COutFileStream;
-    CMyComPtr<IOutStream> out_file_stream = out_file_stream_spec;
-    if (!out_file_stream_spec->Create_NEW(archive_name)) return false;
+    // Create output file or volume stream
+    CMyComPtr<IOutStream> out_file_stream;
+    
+    if (volume_size > 0) {
+      // 分卷压缩：创建第一个分卷文件
+      FString archive_name = us2fs(UString(archive_path.c_str()));
+      COutFileStream *out_file_stream_spec = new COutFileStream;
+      
+      // 创建一个有限制大小的输出流
+      CLimitedSequentialOutStream *limited_out_stream_spec = new CLimitedSequentialOutStream;
+      CMyComPtr<ISequentialOutStream> limited_out_stream(limited_out_stream_spec);
+      
+      // 打开第一个分卷文件
+      if (!out_file_stream_spec->Create_NEW(archive_name)) return false;
+      
+      // 设置有限制大小的输出流
+      limited_out_stream_spec->SetStream(out_file_stream_spec);
+      limited_out_stream_spec->Init(volume_size);
+      
+      // 将有限制大小的输出流转换为IOutStream接口
+      // 注意：这里需要一个支持Seek操作的流，所以我们仍然需要使用原始的out_file_stream
+      out_file_stream = out_file_stream_spec;
+      
+      std::wcout << L"Creating multi-volume archive with volume size: "
+                 << (volume_size / 1024 / 1024) << L" MB" << std::endl;
+    } else {
+      // 普通压缩：创建单一输出文件
+      FString archive_name = us2fs(UString(archive_path.c_str()));
+      COutFileStream *out_file_stream_spec = new COutFileStream;
+      out_file_stream = out_file_stream_spec;
+      if (!out_file_stream_spec->Create_NEW(archive_name)) return false;
+    }
     
     // Create archive object
     CMyComPtr<IOutArchive> out_archive;
@@ -238,6 +327,7 @@ private:
       values_xx[1].boolVal = VARIANT_TRUE;  // 创建时间
       
       auto set_ret = set_properties->SetProperties(names, values_xx, 2);
+      std::cout << "set_ret: " << set_ret;
     }
     
     // Create update callback
@@ -245,10 +335,37 @@ private:
     CMyComPtr<IArchiveUpdateCallback2> update_callback(update_callback_spec);
     update_callback_spec->Init(&dir_items, UString(password.c_str()));
     
+    // 设置分卷信息
+    if (volume_size > 0) {
+      // 从archive_path提取基础名称和扩展名
+      UString base_path = UString(archive_path.c_str());
+      int dot_pos = base_path.ReverseFind_Dot();
+      UString vol_name, vol_ext;
+      
+      if (dot_pos >= 0) {
+        vol_name = base_path.Left(dot_pos);
+        vol_ext = base_path.Ptr(dot_pos + 1);
+      } else {
+        vol_name = base_path;
+        vol_ext = L"7z";
+      }
+      
+      update_callback_spec->SetVolumeInfo(vol_name, vol_ext, volume_size);
+    }
+    
     // Perform compression
     HRESULT result = out_archive->UpdateItems(out_file_stream, 
                                              dir_items.Size(), 
                                              update_callback);
+    
+    if (result == S_OK) {
+      if (volume_size > 0) {
+        std::wcout << L"Multi-volume archive created successfully!" << std::endl;
+      } else {
+        std::wcout << L"Archive created: " << archive_path << std::endl;
+      }
+    }
+    
     return result == S_OK;
   }
   
@@ -280,40 +397,48 @@ private:
 };
 
 int main() {
-  // 示例：创建自解压文件
-  std::vector<std::wstring> files = {
-      LR"(C:\Users\ewing\Desktop\zip_test\7zFM.exe)",
-      LR"(C:\Users\ewing\Desktop\zip_test\7zG.exe)",
-      LR"(C:\Users\ewing\Desktop\zip_test\7-zip.chm)",
-      LR"(C:\Users\ewing\Desktop\zip_test\7-zip.dll)",
-      LR"(C:\Users\ewing\Desktop\zip_test\7-zip32.dll)",
-      LR"(C:\Users\ewing\Desktop\zip_test\Uninstall.exe)",
+  std::wcout << L"=== 7z Compression Demo with Volume Support ===" << std::endl;
+  
+  // 测试文件列表
+  std::vector<std::wstring> test_files = {
+    LR"(C:\Users\ewing\Desktop\zip_test\7zFM.exe)",
+    LR"(C:\Users\ewing\Desktop\zip_test\7zG.exe)",
+    LR"(C:\Users\ewing\Desktop\zip_test\7-zip.chm)",
+    LR"(C:\Users\ewing\Desktop\zip_test\output.amv)"
   };
   
-  std::wstring sfx_path = LR"(C:\Users\ewing\Desktop\zip_test\output_sfx.exe)";
+  // 1. 测试普通压缩
+  // std::wcout << L"\n1. Testing normal compression..." << std::endl;
+  // if (FileCompressor::CompressFiles(test_files,
+  // L"C:\\Users\\ewing\\Desktop\\archive_temp\\normal_archive.7z")) {
+  //   std::wcout << L"Normal compression successful!" << std::endl;
+  // } else {
+  //   std::wcout << L"Normal compression failed!" << std::endl;
+  // }
   
-  // 删除已存在的文件
-  if (::PathFileExists(sfx_path.c_str())) {
-    ::DeleteFile(sfx_path.c_str());
+  // 2. 测试分卷压缩 (每个分卷5MB)
+  std::wstring out_file = L"C:\\Users\\ewing\\Desktop\\zip_test\\volume_archive.7z";
+  if (PathFileExists(out_file.c_str())) {
+    DeleteFile(out_file.c_str());
+  }
+  std::wcout << L"\n2. Testing volume compression (5MB per volume)..." << std::endl;
+  if (FileCompressor::CompressFilesWithVolumes(test_files, 
+                                              out_file.c_str(), 
+                                              5)) {  // 5MB per volume
+    std::wcout << L"Volume compression successful!" << std::endl;
+  } else {
+    std::wcout << L"Volume compression failed!" << std::endl;
   }
   
-  // 设置密码（可选）
-  std::wstring password = L"";
+  // 3. 测试自解压文件
+  // std::wcout << L"\n3. Testing self-extracting archive..." << std::endl;
+  // if (FileCompressor::CreateSelfExtractingArchive(test_files, 
+  //                                                 L"C:\\Users\\ewing\\Desktop\\archive_temp\\selfextract.exe")) {
+  //   std::wcout << L"Self-extracting archive created successfully!" << std::endl;
+  // } else {
+  //   std::wcout << L"Self-extracting archive creation failed!" << std::endl;
+  // }
   
-  std::wcout << L"Creating self-extracting archive..." << std::endl;
-  
-  // 创建自解压文件
-  bool success = FileCompressor::CreateSelfExtractingArchive(files, sfx_path, password);
-  
-  if (success) {
-    if (::PathFileExists(sfx_path.c_str())) {
-      std::wcout << L"Self-extracting archive created successfully!" << std::endl;
-      std::wcout << L"File: " << sfx_path << std::endl;
-      std::wcout << L"Password: " << password << std::endl;
-      return 0; // Success
-    }
-  }
-  
-  std::wcout << L"Failed to create self-extracting archive!" << std::endl;
-  return 1; // Failure
+  std::wcout << L"\n=== Demo completed ===" << std::endl;
+  return 0;
 }
